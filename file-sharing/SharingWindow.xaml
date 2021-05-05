@@ -5,8 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:file_sharing"
         mc:Ignorable="d"
-        Title="SharingWindow" Height="450" Width="800">
+        Title="File sharing" Height="420" Width="810">
     <Grid>
-        
+        <StackPanel x:Name="fileDropPanel" HorizontalAlignment="Left" Height="366" VerticalAlignment="Top" Width="577" Margin="10,10,0,0" Background="#FFF6F6F6"/>
+        <ListBox x:Name="clientsListBox" HorizontalAlignment="Right" Height="346" VerticalAlignment="Top" Width="190" Margin="10,30,10,0"/>
+        <!--<Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Margin="668,387,0,0" VerticalAlignment="Top" Width="116" RenderTransformOrigin="0.381,-0.104" Height="23" Click="btnSendClick"/> -->
+        <Label Content="Online" HorizontalAlignment="Left" Margin="669,0,0,0" VerticalAlignment="Top" FontSize="15" FontWeight="DemiBold"/>
     </Grid>
 </Window>

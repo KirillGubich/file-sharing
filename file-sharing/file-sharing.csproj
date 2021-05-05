@@ -55,7 +55,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Client.cs" />
+    <Compile Include="ClientsRegistrar.cs" />
+    <Compile Include="Messenger.cs" />
     <Compile Include="NetworkUtil.cs" />
+    <Compile Include="SharingManager.cs" />
     <Compile Include="SharingWindow.xaml.cs">
       <DependentUpon>SharingWindow.xaml</DependentUpon>
     </Compile>

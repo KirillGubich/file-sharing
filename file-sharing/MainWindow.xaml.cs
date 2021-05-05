@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -34,7 +36,7 @@ namespace file_sharing
 
         private void btnConnectClick(object sender, RoutedEventArgs e)
         {
-            SharingWindow sharingWindow = new SharingWindow();
+            SharingWindow sharingWindow = SharingWindow.GetInstance();
             sharingWindow.Init(nameInput.Text, selectedIPAddress);
             sharingWindow.Show();
             Close();
