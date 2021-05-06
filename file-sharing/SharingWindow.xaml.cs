@@ -15,9 +15,6 @@ using System.Windows.Shapes;
 
 namespace file_sharing
 {
-    /// <summary>
-    /// Логика взаимодействия для SharingWindow.xaml
-    /// </summary>
     public partial class SharingWindow : Window
     {
 
@@ -64,6 +61,11 @@ namespace file_sharing
                     listCount = clientsListBox.Items.Count;
                 }
             });
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            sharingManager.Send("D:/photo.png");
         }
     }
 }

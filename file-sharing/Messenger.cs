@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,9 +15,10 @@ namespace file_sharing
     {
         public const int TCP_PORT = 31244;
         public const int UDP_PORT = 31234;
-        public const byte MESSAGE_CODE = 1;
+        public const byte FILE_CODE = 1;
         public const byte NAME_CODE = 2;
         public const byte USER_DISCONNECT_CODE = 3;
+        private const int FILE_BUFFER_SIZE = 1_048_576;
 
         public void ReceiveConnectionRequests(List<Client> clients)
         {
@@ -52,15 +54,31 @@ namespace file_sharing
             }
         }
 
-        public void Send(List<Client> clients, string message)
-        {
-            byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-            byte[] messageWithCode = new byte[messageBytes.Length + 1];
-            messageWithCode[0] = MESSAGE_CODE;
-            messageBytes.CopyTo(messageWithCode, 1);
+        public void SendFile(List<Client> clients, string filePath)
+        {          
+            FileInfo info = new FileInfo(filePath);
+            if (info.Length == 0)
+            {
+                return;
+            }
+            string fileName = info.Name;
+            byte[] messageBytes = Encoding.UTF8.GetBytes(fileName);
+            byte[] messageWithCode = new byte[messageBytes.Length + 2];
+            messageWithCode[0] = FILE_CODE;
+            messageWithCode[1] = (byte) fileName.Length;
+            messageBytes.CopyTo(messageWithCode, 2);
             foreach (Client client in clients)
             {
                 client.Connection.GetStream().Write(messageWithCode, 0, messageWithCode.Length);
+            }
+
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                foreach (Client client in clients)
+                {
+                    NetworkStream ns = client.Connection.GetStream();
+                    fileStream.CopyTo(ns);
+                }
             }
         }
         public void SendName(Client client, string name)

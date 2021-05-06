@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -13,7 +14,8 @@ namespace file_sharing
         private string name;
         private IPAddress ipAddress;
         private TcpClient connection;
-        private const int BUFFER_SIZE = 1_048_576;
+        private const int BUFFER_SIZE = 101;
+        private const int FILE_BUFFER_SIZE = 1_048_576;
 
         public Client(string name, IPAddress ipAddress, TcpClient connection)
         {
@@ -67,7 +69,7 @@ namespace file_sharing
 
         public void ReceiveMessages(List<Client> clients)
         {
-            NetworkStream OneUserStream = Connection.GetStream();
+            NetworkStream userStream = Connection.GetStream();
             try
             {
                 while (true)
@@ -75,22 +77,16 @@ namespace file_sharing
                     byte[] byteMessage = new byte[BUFFER_SIZE];
                     StringBuilder MessageBuilder = new StringBuilder();
                     string message;
-                    int RecBytes = 0;
-                    do
-                    {
-                        RecBytes = OneUserStream.Read(byteMessage, 0, byteMessage.Length);
-                        MessageBuilder.Append(Encoding.UTF8.GetString(byteMessage, 0, RecBytes));
-                    }
-                    while (OneUserStream.DataAvailable);
-
+                    int recBytes = 0;
+                    recBytes = userStream.Read(byteMessage, 0, byteMessage.Length);
+                    MessageBuilder.Append(Encoding.UTF8.GetString(byteMessage, 0, recBytes));
                     message = MessageBuilder.ToString();
-                    int messageCode = message[0];
+                    byte messageCode = byteMessage[0];
                     switch (messageCode)
                     {
-                        case Messenger.MESSAGE_CODE:
+                        case Messenger.FILE_CODE:
                             {
-                                string resultMessage;
-                                resultMessage = name + " (" + DateTime.Now.ToLongTimeString() + "): " + message.Substring(1);
+                                ReceiveFile(byteMessage, userStream, recBytes);
                                 break;
                             }
                         case Messenger.NAME_CODE:
@@ -118,10 +114,42 @@ namespace file_sharing
             }
         }
 
+        private void ReceiveFile(byte[] fileData, NetworkStream networkStream, int bytesReseived)
+        {
+            int fileNameLength = fileData[1];
+            byte[] fileNameBytes = new byte[fileNameLength];
+            Array.Copy(fileData, 2, fileNameBytes, 0, fileNameLength);
+            string fileName = Encoding.UTF8.GetString(fileNameBytes);
+            
+            byte[] fileBuffer = new byte[FILE_BUFFER_SIZE];
+            int RecBytes;
+            do
+            {
+                RecBytes = networkStream.Read(fileBuffer, 0, fileBuffer.Length);
+                WriteToFile(fileName, fileBuffer, RecBytes);
+            } while (networkStream.DataAvailable);
+        }
+
+
         private void DisconnectClient(List<Client> clients)
         {
             clients.Remove(this);
             SharingManager.UpdateView();
+        }
+
+        private void WriteToFile(string fileName, byte[] data, int count)
+        {
+            try
+            {
+                using (FileStream fileStream = new FileStream(fileName, FileMode.Append, FileAccess.Write))
+                {
+                    fileStream.Write(data, 0, count);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

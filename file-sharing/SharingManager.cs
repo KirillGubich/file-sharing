@@ -50,11 +50,9 @@ namespace file_sharing
             SharingWindow.GetInstance().UpdateOnlineBox();
         }
 
-        public void SendMessage(string message)
+        public void Send(string filePath)
         {
-            messenger.Send(clients, message);
-            //messageHistory.Add(clientName + " (" + DateTime.Now.ToLongTimeString() + ")" + ": " + message);
-            UpdateView();
+            messenger.SendFile(clients, filePath);
         }
 
         public void Disconnect()

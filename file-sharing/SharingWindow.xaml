@@ -11,5 +11,6 @@
         <ListBox x:Name="clientsListBox" HorizontalAlignment="Right" Height="346" VerticalAlignment="Top" Width="190" Margin="10,30,10,0"/>
         <!--<Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Margin="668,387,0,0" VerticalAlignment="Top" Width="116" RenderTransformOrigin="0.381,-0.104" Height="23" Click="btnSendClick"/> -->
         <Label Content="Online" HorizontalAlignment="Left" Margin="669,0,0,0" VerticalAlignment="Top" FontSize="15" FontWeight="DemiBold"/>
+        <Button Content="Button" HorizontalAlignment="Left" Margin="728,10,0,0" VerticalAlignment="Top" Width="60" Height="15" Click="Button_Click"/>
     </Grid>
 </Window>
