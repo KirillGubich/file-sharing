@@ -18,7 +18,6 @@ namespace file_sharing
         public const byte FILE_CODE = 1;
         public const byte NAME_CODE = 2;
         public const byte USER_DISCONNECT_CODE = 3;
-        private const int FILE_BUFFER_SIZE = 1_048_576;
 
         public void ReceiveConnectionRequests(List<Client> clients)
         {
@@ -62,11 +61,14 @@ namespace file_sharing
                 return;
             }
             string fileName = info.Name;
+            long fileSize = info.Length;
+            byte[] fileSizeBytes = BitConverter.GetBytes(fileSize);
             byte[] messageBytes = Encoding.UTF8.GetBytes(fileName);
-            byte[] messageWithCode = new byte[messageBytes.Length + 2];
+            byte[] messageWithCode = new byte[110];
             messageWithCode[0] = FILE_CODE;
-            messageWithCode[1] = (byte) fileName.Length;
-            messageBytes.CopyTo(messageWithCode, 2);
+            fileSizeBytes.CopyTo(messageWithCode, 1);
+            messageWithCode[9] = (byte) fileName.Length;
+            messageBytes.CopyTo(messageWithCode, 10);
             foreach (Client client in clients)
             {
                 client.Connection.GetStream().Write(messageWithCode, 0, messageWithCode.Length);
@@ -76,8 +78,8 @@ namespace file_sharing
             {
                 foreach (Client client in clients)
                 {
-                    NetworkStream ns = client.Connection.GetStream();
-                    fileStream.CopyTo(ns);
+                    NetworkStream clientStream = client.Connection.GetStream();
+                    fileStream.CopyTo(clientStream);
                 }
             }
         }

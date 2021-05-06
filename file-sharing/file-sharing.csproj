@@ -34,6 +34,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>1486486308-arrow-document-data-file-folder-send_81242.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -57,6 +60,7 @@
     </ApplicationDefinition>
     <Compile Include="Client.cs" />
     <Compile Include="ClientsRegistrar.cs" />
+    <Compile Include="FileManager.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="NetworkUtil.cs" />
     <Compile Include="SharingManager.cs" />
@@ -105,6 +109,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="1486486308-arrow-document-data-file-folder-send_81242.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

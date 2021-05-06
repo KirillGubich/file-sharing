@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -63,9 +64,45 @@ namespace file_sharing
             });
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void fileDropPanel_DragEnter(object sender, DragEventArgs e)
         {
-            sharingManager.Send("D:/photo.png");
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                panelLabel.Content = "Drop files";
+                e.Effects = DragDropEffects.Copy;
+                Brush brush = new SolidColorBrush(Colors.LightGreen);
+                fileDropPanel.Background = brush;
+            }
+        }
+
+        private void fileDropPanel_DragLeave(object sender, DragEventArgs e)
+        {
+            panelLabel.Content = "Drag files here";
+            Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
+            fileDropPanel.Background = brush;
+
+        }
+
+        private void fileDropPanel_Drop(object sender, DragEventArgs e)
+        {
+            string[] fileDropData = (string[]) e.Data.GetData(DataFormats.FileDrop);
+            List<string> paths = new List<string>();
+            foreach (string path in fileDropData)
+            {
+                if (Directory.Exists(path))
+                {
+                    paths.AddRange(Directory.GetFiles(path, "*.*", SearchOption.AllDirectories));
+                }
+                else
+                {
+                    paths.Add(path);
+                }
+            }
+
+            paths.ForEach(file => sharingManager.Send(file));
+            Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
+            fileDropPanel.Background = brush;
+            panelLabel.Content = "Drag files here";
         }
     }
 }
