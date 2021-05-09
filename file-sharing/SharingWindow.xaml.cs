@@ -1,20 +1,9 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace file_sharing
 {
@@ -24,6 +13,12 @@ namespace file_sharing
         public static object OnlineThreadLock = new object();
         private SharingManager sharingManager;
         private static SharingWindow instance;
+        private static int FILE_NAME_MAX_LENGTH = 22;
+        private const string DRAG_FILES_LABEL = "Drag files here";
+        private const string DROP_FILES_LABEL = "Drop files";
+        private const string RECEIVING_LABEL = "Receiving: ";
+        private const string SENDING_LABEL = "Sending: ";
+        private const string FILE_MASK = "*.*";
 
         private SharingWindow()
         {
@@ -65,15 +60,19 @@ namespace file_sharing
                 }
             });
         }
-        public static void SetReceivingProgress(string fileName, int value)
+        public static void SetReceivingProgress(int value)
         {
-            if (fileName.Length > 21)
-            {
-                fileName = fileName.Substring(0, 22) + "...";
-            }
             GetInstance().receivingProgressBar.Value = value;
-            GetInstance().receivingFileNameLabel.Content = "Receiving: " + fileName;
             GetInstance().receivingPercent.Content = value + " %";
+        }
+
+        public static void SetReceivingFile(string fileName)
+        {
+            if (fileName.Length > FILE_NAME_MAX_LENGTH)
+            {
+                fileName = fileName.Substring(0, FILE_NAME_MAX_LENGTH) + "...";
+            }
+            GetInstance().receivingFileNameLabel.Content = RECEIVING_LABEL + fileName;
         }
 
         public static void ResetReceivingProggress()
@@ -83,15 +82,19 @@ namespace file_sharing
             GetInstance().receivingPercent.Content = "";
         }
 
-        public static void SetSendingProgress(string fileName, int value)
+        public static void SetSendingProgress(int value)
         {
-            if (fileName.Length > 21)
-            {
-                fileName = fileName.Substring(0, 22) + "...";
-            }
             GetInstance().sendingProgressBar.Value = value;
-            GetInstance().sendingFileNameLabel.Content = "Sending: " + fileName;
             GetInstance().sendingPercent.Content = value + " %";
+        }
+
+        public static void SetSendingFile(string fileName)
+        {
+            if (fileName.Length > FILE_NAME_MAX_LENGTH)
+            {
+                fileName = fileName.Substring(0, FILE_NAME_MAX_LENGTH) + "...";
+            }
+            GetInstance().sendingFileNameLabel.Content = SENDING_LABEL + fileName;
         }
 
         public static void ResetSendingProgress()
@@ -101,11 +104,18 @@ namespace file_sharing
             GetInstance().sendingPercent.Content = "";
         }
 
+        private void ResetPanelInterface()
+        {
+            Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
+            fileDropPanel.Background = brush;
+            panelLabel.Content = DRAG_FILES_LABEL;
+        }
+
         private void fileDropPanel_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                panelLabel.Content = "Drop files";
+                panelLabel.Content = DROP_FILES_LABEL;
                 e.Effects = DragDropEffects.Copy;
                 Brush brush = new SolidColorBrush(Colors.LightGreen);
                 fileDropPanel.Background = brush;
@@ -114,21 +124,19 @@ namespace file_sharing
 
         private void fileDropPanel_DragLeave(object sender, DragEventArgs e)
         {
-            panelLabel.Content = "Drag files here";
-            Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
-            fileDropPanel.Background = brush;
+            ResetPanelInterface();
 
         }
 
         private void fileDropPanel_Drop(object sender, DragEventArgs e)
         {
-            string[] fileDropData = (string[]) e.Data.GetData(DataFormats.FileDrop);
+            string[] fileDropData = (string[])e.Data.GetData(DataFormats.FileDrop);
             List<string> paths = new List<string>();
             foreach (string path in fileDropData)
             {
                 if (Directory.Exists(path))
                 {
-                    paths.AddRange(Directory.GetFiles(path, "*.*", SearchOption.AllDirectories));
+                    paths.AddRange(Directory.GetFiles(path, FILE_MASK, SearchOption.AllDirectories));
                 }
                 else
                 {
@@ -138,9 +146,7 @@ namespace file_sharing
             Thread sendThread = new Thread(() => paths.ForEach(file => sharingManager.Send(file)));
             sendThread.IsBackground = true;
             sendThread.Start();
-            Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
-            fileDropPanel.Background = brush;
-            panelLabel.Content = "Drag files here";
+            ResetPanelInterface();
         }
     }
 }

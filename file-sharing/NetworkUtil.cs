@@ -23,7 +23,7 @@ namespace file_sharing
 
         public static IPAddress GetBroadcastIP(IPAddress address)
         {
-            IPAddress subnetMask =  GetSubnetMask(address);
+            IPAddress subnetMask = GetSubnetMask(address);
             uint ipAddress = BitConverter.ToUInt32(address.GetAddressBytes(), 0);
             uint ipMaskV4 = BitConverter.ToUInt32(subnetMask.GetAddressBytes(), 0);
             uint broadCastIpAddress = ipAddress | ~ipMaskV4;

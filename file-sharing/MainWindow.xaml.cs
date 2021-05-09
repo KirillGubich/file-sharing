@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -38,7 +36,7 @@ namespace file_sharing
         {
             if (nameInput.Text == "")
             {
-                
+
                 MessageBox.Show("Enter name", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }

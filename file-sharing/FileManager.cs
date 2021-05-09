@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace file_sharing
 {
@@ -11,21 +10,18 @@ namespace file_sharing
     {
         public const int FILE_BUFFER_SIZE = 5_048_576;
         private static SharingWindow sharingWindow = SharingWindow.GetInstance();
+
         public static void ReceiveFile(byte[] fileNameData, NetworkStream networkStream)
         {
-            int fileNameLength = fileNameData[9];
-            byte[] fileSizeBytes = new byte[sizeof(long)];
-            Array.Copy(fileNameData, 1, fileSizeBytes, 0, sizeof(long));
-            long fileSize = BitConverter.ToInt64(fileSizeBytes, 0);
-            byte[] fileNameBytes = new byte[fileNameLength];
-            Array.Copy(fileNameData, 10, fileNameBytes, 0, fileNameLength);
-            string fileName = Encoding.UTF8.GetString(fileNameBytes);
+            long fileSize = ExtractFileSize(fileNameData);
+            string fileName = ExtractFileName(fileNameData);
             fileName = AvoidOverwriting(fileName);
-            byte[] fileBuffer = new byte[FILE_BUFFER_SIZE];
-            int recBytes;
-            int totalReceived = 0;
             try
             {
+                byte[] fileBuffer = new byte[FILE_BUFFER_SIZE];
+                int recBytes;
+                int totalReceived = 0;
+                sharingWindow.Dispatcher.Invoke(() => SharingWindow.SetReceivingFile(fileName));
                 do
                 {
                     int bytesToRead = fileBuffer.Length;
@@ -36,18 +32,31 @@ namespace file_sharing
                     recBytes = networkStream.Read(fileBuffer, 0, bytesToRead);
                     WriteToFile(fileName, fileBuffer, recBytes);
                     totalReceived += recBytes;
-                    double percentReceived = ((double)totalReceived) / fileSize;
-                    int progress = Convert.ToInt32(percentReceived * 100);
-                    SharingWindow.GetInstance().Dispatcher.Invoke(
-                        () => SharingWindow.SetReceivingProgress(fileName, progress));
+                    int progress = CountProgress(totalReceived, fileSize);
+                    sharingWindow.Dispatcher.Invoke(() => SharingWindow.SetReceivingProgress(progress));
                 } while (totalReceived < fileSize);
-            } catch
+            }
+            catch
             {
                 MessageBox.Show("Connection was broken. File was not received", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
-            SharingWindow.GetInstance().Dispatcher.Invoke(
-                    () => SharingWindow.ResetReceivingProggress());
+
+            sharingWindow.Dispatcher.Invoke(() => SharingWindow.ResetReceivingProggress());
+        }
+
+        private static string ExtractFileName(byte[] fileNameData)
+        {
+            int fileNameLength = fileNameData[Messenger.FILE_NAME_LENGTH_INDEX];
+            byte[] fileNameBytes = new byte[fileNameLength];
+            Array.Copy(fileNameData, Messenger.FILE_NAME_BYTE_INDEX, fileNameBytes, 0, fileNameLength);
+            return Encoding.UTF8.GetString(fileNameBytes);
+        }
+
+        private static long ExtractFileSize(byte[] fileNameData)
+        {
+            byte[] fileSizeBytes = new byte[sizeof(long)];
+            Array.Copy(fileNameData, Messenger.FILE_SIZE_BYTE_INDEX, fileSizeBytes, 0, sizeof(long));
+            return BitConverter.ToInt64(fileSizeBytes, 0);
         }
 
         private static void WriteToFile(string fileName, byte[] data, int count)
@@ -75,6 +84,12 @@ namespace file_sharing
             }
         }
 
+        public static int CountProgress(long totalSent, long fileSize)
+        {
+            double percentReceived = ((double)totalSent) / fileSize;
+            return Convert.ToInt32(percentReceived * 100);
+        }
+
         private static string AvoidOverwriting(string fileName)
         {
             int i = 1;
@@ -85,8 +100,8 @@ namespace file_sharing
                 updFileName = "(" + i + ")" + fileName;
                 fullPath = Path.Combine("storage", updFileName);
                 i++;
-                
-            } 
+
+            }
             return updFileName;
         }
     }
