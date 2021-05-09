@@ -36,6 +36,12 @@ namespace file_sharing
 
         private void btnConnectClick(object sender, RoutedEventArgs e)
         {
+            if (nameInput.Text == "")
+            {
+                
+                MessageBox.Show("Enter name", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
             SharingWindow sharingWindow = SharingWindow.GetInstance();
             sharingWindow.Init(nameInput.Text, selectedIPAddress);
             sharingWindow.Show();

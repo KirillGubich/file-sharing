@@ -10,7 +10,6 @@ namespace file_sharing
         private string name;
         private IPAddress ipAddress;
         private TcpClient connection;
-        private const int BUFFER_SIZE = 110;
 
         public Client(string name, IPAddress ipAddress, TcpClient connection)
         {
@@ -69,7 +68,7 @@ namespace file_sharing
             {
                 while (true)
                 {
-                    byte[] byteMessage = new byte[BUFFER_SIZE];
+                    byte[] byteMessage = new byte[Messenger.FILE_INFO_SIZE];
                     StringBuilder MessageBuilder = new StringBuilder();
                     string message;
                     int recBytes = 0;

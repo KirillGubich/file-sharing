@@ -18,6 +18,7 @@ namespace file_sharing
         public const byte FILE_CODE = 1;
         public const byte NAME_CODE = 2;
         public const byte USER_DISCONNECT_CODE = 3;
+        public const byte FILE_INFO_SIZE = 210;
 
         public void ReceiveConnectionRequests(List<Client> clients)
         {
@@ -40,7 +41,7 @@ namespace file_sharing
                         }
                         SharingManager.UpdateView();
                     }
-                    StartMessageReceiving(senderClient, clients);
+                    StartFileReceiving(senderClient, clients);
                 }
             }
             catch
@@ -64,7 +65,7 @@ namespace file_sharing
             long fileSize = info.Length;
             byte[] fileSizeBytes = BitConverter.GetBytes(fileSize);
             byte[] messageBytes = Encoding.UTF8.GetBytes(fileName);
-            byte[] messageWithCode = new byte[110];
+            byte[] messageWithCode = new byte[FILE_INFO_SIZE];
             messageWithCode[0] = FILE_CODE;
             fileSizeBytes.CopyTo(messageWithCode, 1);
             messageWithCode[9] = (byte) fileName.Length;
@@ -72,16 +73,8 @@ namespace file_sharing
             foreach (Client client in clients)
             {
                 client.Connection.GetStream().Write(messageWithCode, 0, messageWithCode.Length);
-            }
-
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                foreach (Client client in clients)
-                {
-                    NetworkStream clientStream = client.Connection.GetStream();
-                    fileStream.CopyTo(clientStream);
-                }
-            }
+            }        
+            SendFileToClients(clients, filePath);         
         }
         public void SendName(Client client, string name)
         {
@@ -101,11 +94,41 @@ namespace file_sharing
             }
         }
 
-        private void StartMessageReceiving(Client senderClient, List<Client> clients)
+        private void StartFileReceiving(Client senderClient, List<Client> clients)
         {
             Thread messageReceivingThread = new Thread(() => { senderClient.ReceiveMessages(clients); });
             messageReceivingThread.IsBackground = true;
             messageReceivingThread.Start();
+        }
+
+        private void SendFileToClients(List<Client> clients, string filePath)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(filePath);
+                    long fileSize = fileInfo.Length;
+                    string fileName = fileInfo.Name;
+                    int bytesRead;
+                    int totalSent = 0;
+                    byte[] fileBuffer = new byte[FileManager.FILE_BUFFER_SIZE];
+                    while ((bytesRead = fileStream.Read(fileBuffer, 0, fileBuffer.Length)) > 0)
+                    {
+                        clients.ForEach((client) => client.Connection.GetStream().Write(fileBuffer, 0, bytesRead));
+                        totalSent += bytesRead;
+                        double percentReceived = ((double)totalSent) / fileSize;
+                        int progress = Convert.ToInt32(percentReceived * 100);
+                        SharingWindow.GetInstance().Dispatcher.Invoke(
+                            () => SharingWindow.SetSendingProgress(fileName, progress));
+                    }
+                } catch
+                {
+                    MessageBox.Show("Connection was broken. File was not sent", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                SharingWindow.GetInstance().Dispatcher.Invoke(
+                            () => SharingWindow.ResetSendingProgress());
+            }
         }
     }
 }

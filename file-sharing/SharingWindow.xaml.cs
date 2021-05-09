@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -63,6 +65,41 @@ namespace file_sharing
                 }
             });
         }
+        public static void SetReceivingProgress(string fileName, int value)
+        {
+            if (fileName.Length > 21)
+            {
+                fileName = fileName.Substring(0, 22) + "...";
+            }
+            GetInstance().receivingProgressBar.Value = value;
+            GetInstance().receivingFileNameLabel.Content = "Receiving: " + fileName;
+            GetInstance().receivingPercent.Content = value + " %";
+        }
+
+        public static void ResetReceivingProggress()
+        {
+            GetInstance().receivingProgressBar.Value = 0;
+            GetInstance().receivingFileNameLabel.Content = "";
+            GetInstance().receivingPercent.Content = "";
+        }
+
+        public static void SetSendingProgress(string fileName, int value)
+        {
+            if (fileName.Length > 21)
+            {
+                fileName = fileName.Substring(0, 22) + "...";
+            }
+            GetInstance().sendingProgressBar.Value = value;
+            GetInstance().sendingFileNameLabel.Content = "Sending: " + fileName;
+            GetInstance().sendingPercent.Content = value + " %";
+        }
+
+        public static void ResetSendingProgress()
+        {
+            GetInstance().sendingProgressBar.Value = 0;
+            GetInstance().sendingFileNameLabel.Content = "";
+            GetInstance().sendingPercent.Content = "";
+        }
 
         private void fileDropPanel_DragEnter(object sender, DragEventArgs e)
         {
@@ -98,8 +135,9 @@ namespace file_sharing
                     paths.Add(path);
                 }
             }
-
-            paths.ForEach(file => sharingManager.Send(file));
+            Thread sendThread = new Thread(() => paths.ForEach(file => sharingManager.Send(file)));
+            sendThread.IsBackground = true;
+            sendThread.Start();
             Brush brush = new SolidColorBrush(Colors.WhiteSmoke);
             fileDropPanel.Background = brush;
             panelLabel.Content = "Drag files here";

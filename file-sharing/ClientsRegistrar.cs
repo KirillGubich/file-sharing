@@ -28,7 +28,7 @@ namespace file_sharing
                     bool ownRequest = ownIPAddress.ToString() == iPEndPoint.Address.ToString();
                     if (newClient && !ownRequest)
                     {
-                        TcpClient tcpClient = EstablishConnection(iPEndPoint.Address);
+                        TcpClient tcpClient = EstablishConnection(iPEndPoint.Address, receivedName);
                         if (tcpClient != null)
                         {
                             Client client = new Client(receivedName, iPEndPoint.Address, tcpClient);
@@ -80,7 +80,7 @@ namespace file_sharing
             }
         }
 
-        private TcpClient EstablishConnection(IPAddress iPAddress)
+        private TcpClient EstablishConnection(IPAddress iPAddress, string name)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace file_sharing
             }
             catch
             {
-                MessageBox.Show("TCP connection error");
+                MessageBox.Show("Failed to establish connection with " + name);
                 return null;
             }
         }
