@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:file_sharing"
         mc:Ignorable="d"
-        Title="File sharing" Height="482" Width="685">
+        Title="File sharing" Height="482" Width="685" ResizeMode="NoResize">
     <Grid>
         <StackPanel x:Name="fileDropPanel" HorizontalAlignment="Left" Height="366" VerticalAlignment="Top" Width="450" Margin="10,10,0,0" DragEnter="fileDropPanel_DragEnter" DragLeave="fileDropPanel_DragLeave" Drop="fileDropPanel_Drop" AllowDrop="True" Background="#FFF6F6F6">
             <Label x:Name="panelLabel" Content="Drag files here" RenderTransformOrigin="0.417,3.258" Margin="78,170,78.6,0" Height="37" HorizontalContentAlignment="Center" FontSize="20"/>

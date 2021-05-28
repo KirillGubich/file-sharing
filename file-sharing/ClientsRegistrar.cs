@@ -9,6 +9,8 @@ namespace file_sharing
 {
     class ClientsRegistrar
     {
+        private const int TCP_PORT = 31244;
+        private const int UDP_PORT = 31234;
 
         public void AcceptRequests(List<Client> clients, Messenger messenger, string clientName, IPAddress ownIPAddress)
         {
@@ -16,7 +18,7 @@ namespace file_sharing
             try
             {
                 udpCLient = new UdpClient();
-                IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Any, Messenger.UDP_PORT);
+                IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Any, UDP_PORT);
                 udpCLient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 udpCLient.ExclusiveAddressUse = false;
                 udpCLient.Client.Bind(iPEndPoint);
@@ -33,7 +35,7 @@ namespace file_sharing
                         {
                             Client client = new Client(receivedName, iPEndPoint.Address, tcpClient);
                             clients.Add(client);
-                            StartMessageReceiving(client, clients);
+                            StartFileReceiving(client, clients);
                             messenger.SendName(client, clientName);
                             SharingManager.UpdateView();
                         }
@@ -53,14 +55,48 @@ namespace file_sharing
             }
         }
 
+        public void ReceiveConnectionRequests(List<Client> clients)
+        {
+            TcpListener tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
+            tcpListener.Start();
+            try
+            {
+                while (true)
+                {
+                    TcpClient tcpClient = tcpListener.AcceptTcpClient();
+                    IPAddress senderIP = ((IPEndPoint)tcpClient.Client.RemoteEndPoint).Address;
+                    Client senderClient = clients.Find(client => client.IpAddress == senderIP);
+                    if (senderClient == null)
+                    {
+                        lock (SharingWindow.OnlineThreadLock)
+                        {
+                            Client client = new Client(null, senderIP, tcpClient);
+                            clients.Add(client);
+                            senderClient = client;
+                        }
+                        SharingManager.UpdateView();
+                    }
+                    StartFileReceiving(senderClient, clients);
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Connection request receiving error");
+            }
+            finally
+            {
+                tcpListener.Stop();
+            }
+        }
+
         public bool SendRequest(string name, IPAddress ipAddress)
         {
             UdpClient udpCLient = null;
             try
             {
                 IPAddress broadcastIP = NetworkUtil.GetBroadcastIP(ipAddress);
-                IPEndPoint iPEndPoint = new IPEndPoint(broadcastIP, Messenger.UDP_PORT);
-                udpCLient = new UdpClient(Messenger.UDP_PORT, AddressFamily.InterNetwork);
+                IPEndPoint iPEndPoint = new IPEndPoint(broadcastIP, UDP_PORT);
+                udpCLient = new UdpClient(UDP_PORT, AddressFamily.InterNetwork);
                 udpCLient.Connect(iPEndPoint);
                 byte[] registrationMessage = Encoding.UTF8.GetBytes(name);
                 int bytesSent = udpCLient.Send(registrationMessage, registrationMessage.Length);
@@ -85,7 +121,7 @@ namespace file_sharing
             try
             {
                 TcpClient tcpClient = new TcpClient();
-                tcpClient.Connect(new IPEndPoint(iPAddress, Messenger.TCP_PORT));
+                tcpClient.Connect(new IPEndPoint(iPAddress, TCP_PORT));
                 return tcpClient;
             }
             catch
@@ -95,7 +131,7 @@ namespace file_sharing
             }
         }
 
-        private void StartMessageReceiving(Client client, List<Client> clients)
+        private void StartFileReceiving(Client client, List<Client> clients)
         {
             Thread messageReceivingThread = new Thread(() => { client.ReceiveMessages(clients); });
             messageReceivingThread.IsBackground = true;

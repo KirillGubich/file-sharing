@@ -12,6 +12,7 @@ namespace file_sharing
         private ClientsRegistrar clientsRegistrar;
         private readonly Messenger messenger;
         private IPAddress ipAddress;
+        private static object locker = new object();
 
         public SharingManager(string clientName, IPAddress iPAddress)
         {
@@ -48,7 +49,10 @@ namespace file_sharing
 
         public void Send(string filePath)
         {
-            messenger.SendFile(clients, filePath);
+            lock (locker)
+            {
+                messenger.SendFile(clients, filePath);
+            }
         }
 
         public void Disconnect()
@@ -58,11 +62,11 @@ namespace file_sharing
 
         private void StartReceiving()
         {
-            Thread messengerThread = new Thread(() => { messenger.ReceiveConnectionRequests(clients); });
+            Thread connectionRequestsThread = new Thread(() => { clientsRegistrar.ReceiveConnectionRequests(clients); });
             Thread clientsRegistarThread = new Thread(() => { clientsRegistrar.AcceptRequests(clients, messenger, clientName, ipAddress); });
-            messengerThread.IsBackground = true;
+            connectionRequestsThread.IsBackground = true;
             clientsRegistarThread.IsBackground = true;
-            messengerThread.Start();
+            connectionRequestsThread.Start();
             clientsRegistarThread.Start();
         }
     }

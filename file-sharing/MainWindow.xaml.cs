@@ -9,6 +9,7 @@ namespace file_sharing
     public partial class MainWindow : Window
     {
         private IPAddress selectedIPAddress;
+        private const int NAME_MAX_LENGTH = 30;
 
         public MainWindow()
         {
@@ -27,12 +28,12 @@ namespace file_sharing
             selectedIPAddress = ipList[0];
         }
 
-        private void cmboxUserIP_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void CmboxUserIP_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             selectedIPAddress = IPAddress.Parse(cmboxUserIP.SelectedItem.ToString());
         }
 
-        private void btnConnectClick(object sender, RoutedEventArgs e)
+        private void BtnConnectClick(object sender, RoutedEventArgs e)
         {
             if (nameInput.Text == "")
             {
@@ -44,6 +45,11 @@ namespace file_sharing
             sharingWindow.Init(nameInput.Text, selectedIPAddress);
             sharingWindow.Show();
             Close();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            nameInput.MaxLength = NAME_MAX_LENGTH;
         }
     }
 }

@@ -9,12 +9,13 @@ namespace file_sharing
     static class FileManager
     {
         public const int FILE_BUFFER_SIZE = 5_048_576;
+        private const string FILE_STORAGE_PATH = "storage";
         private static SharingWindow sharingWindow = SharingWindow.GetInstance();
 
-        public static void ReceiveFile(byte[] fileNameData, NetworkStream networkStream)
+        public static void ReceiveFile(byte[] fileInfoData, NetworkStream networkStream)
         {
-            long fileSize = ExtractFileSize(fileNameData);
-            string fileName = ExtractFileName(fileNameData);
+            long fileSize = ExtractFileSize(fileInfoData);
+            string fileName = ExtractFileName(fileInfoData);
             fileName = AvoidOverwriting(fileName);
             try
             {
@@ -62,7 +63,7 @@ namespace file_sharing
         private static void WriteToFile(string fileName, byte[] data, int count)
         {
             CreateDirectory();
-            string fullPath = Path.Combine("storage", fileName);
+            string fullPath = Path.Combine(FILE_STORAGE_PATH, fileName);
             try
             {
                 using (FileStream fileStream = new FileStream(fullPath, FileMode.Append, FileAccess.Write))
@@ -78,9 +79,9 @@ namespace file_sharing
 
         private static void CreateDirectory()
         {
-            if (!Directory.Exists("storage"))
+            if (!Directory.Exists(FILE_STORAGE_PATH))
             {
-                Directory.CreateDirectory("storage");
+                Directory.CreateDirectory(FILE_STORAGE_PATH);
             }
         }
 
@@ -94,11 +95,11 @@ namespace file_sharing
         {
             int i = 1;
             string updFileName = fileName;
-            string fullPath = Path.Combine("storage", updFileName);
+            string fullPath = Path.Combine(FILE_STORAGE_PATH, updFileName);
             while (File.Exists(fullPath))
             {
                 updFileName = "(" + i + ")" + fileName;
-                fullPath = Path.Combine("storage", updFileName);
+                fullPath = Path.Combine(FILE_STORAGE_PATH, updFileName);
                 i++;
 
             }
